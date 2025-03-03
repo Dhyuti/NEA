@@ -107,7 +107,7 @@ def neg_max_alpha_beta(gs, valid_moves, depth, alpha, beta, turn_multiplier):  #
     # Ordering the moves will implement later
     max_score = -CHECKMATE
     for move in valid_moves:
-        gs.makeMove(move)
+        gs.make_move(move)
         next_moves = gs.get_valid_moves()
         score = -neg_max_alpha_beta(gs, next_moves, depth - 1, -beta, -alpha, -turn_multiplier)  # the minimum and maximum get reversed for the opponent
         if score > max_score:
@@ -115,7 +115,7 @@ def neg_max_alpha_beta(gs, valid_moves, depth, alpha, beta, turn_multiplier):  #
 
         if depth == DEPTH:
             next_move = move  # Fixed global variable to match the correct variable name
-        gs.undoMove()
+        gs.undo_move()
 
         if max_score > alpha:  # Pruning happens here
             alpha = max_score
