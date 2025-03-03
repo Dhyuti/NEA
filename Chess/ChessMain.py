@@ -2,22 +2,18 @@
 This is the main file. It is responsible for handling user input and
 displaying the current Game State
 """
-"""
-This is the main file. It is responsible for handling user input and
-displaying the current Game State
-"""
 
 import pygame as p
-from Chess import ChessEngine, ChessAI
+import ChessEngine, ChessAI
 
-boardWidth = boardHeight = 512 #Setting up the size of the screen
+boardWidth = boardHeight = 512  # Setting up the size of the screen
 moveLogPanelWidth = 350
 moveLogPanelHeight = boardHeight
-Dimension = 8 #Chess Boards are 8x8
-SQ_Size = boardHeight // Dimension #Creating the dimensions of each square as fraction of the screen size
-Max_Fps = 20 #For animations
-Images = { } #only want to load images once
-animate = False # Should only animate when a move is being made not when it is being undone
+Dimension = 8  # Chess Boards are 8x8
+SQ_Size = boardHeight // Dimension  # Creating the dimensions of each square as fraction of the screen size
+Max_Fps = 20  # For animations
+Images = {}  # only want to load images once
+animate = False  # Should only animate when a move is being made not when it is being undone
 
 '''
 I am going to load each image once in the main file.
@@ -40,97 +36,100 @@ and loading images onto the screen.
 
 def main():
     p.init()
-screen = p.display.set_mode((boardWidth + moveLogPanelWidth,boardHeight))
-clock = p.time.Clock() #controls the frame rate
-screen.fill(p.Color('White'))
-moveLogFont = p.font.Font('Arial', 18)
-gs = ChessEngine.GameState()
-load_images() #will only load the images once
-programRunning = True
-'''
-Initially no square is selected so the tuple will be empty
-sqSelected keeps track of the last click from the user
-'''
-sqSelected = () #use of a tuple (row,col) here instead of having to reference the x and y coordinates
-playerClicks = [] #Keeps tracks of the player clicks consisting of two tuples [(3,2), (5,5)]
-validMoves = gs.get_valid_moves()
-moveMade = False #A new set of valid moves will only be generated if a valid move is made in the first place
-gameOver = False
+    screen = p.display.set_mode((boardWidth + moveLogPanelWidth, boardHeight))
+    clock = p.time.Clock()  # controls the frame rate
+    screen.fill(p.Color('White'))
+    moveLogFont = p.font.SysFont('Arial', 18)  # Changed from Font to SysFont
+    gs = ChessEngine.GameState()
+    load_images()  # will only load the images once
 
-playerOne = True # If a human is playing white then it is True, if an AI is playing then this is False
+    # Game state variables
+    programRunning = True
+    sqSelected = ()  # use of a tuple (row,col) here instead of having to reference the x and y coordinates
+    playerClicks = []  # Keeps tracks of the player clicks consisting of two tuples [(3,2), (5,5)]
+    validMoves = gs.get_valid_moves()
+    print(validMoves)
+    moveMade = False  # A new set of valid moves will only be generated if a valid move is made in the first place
+    gameOver = False
 
-playerTwo = False # Same as above but for black
-while programRunning:
-    is_human_turn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)  # Conditions for the turn to be from a human
+    playerOne = True  # If a human is playing white then it is True, if an AI is playing then this is False
+    playerTwo = False  # Same as above but for black
 
-    for e in p.event.get():
-        if e.type == p.QUIT:
-            programRunning = False
-        elif e.type == p.MOUSEBUTTONDOWN:
-            if not gameOver and is_human_turn:  # only allow mouse clicks if the game has not finished and, it's the human's turn
-                location = p.mouse.get_pos()  # This gets the x and y coordinates of the mouse
-                col = location[0] // SQ_Size  # columns are the x coordinates
-                row = location[1] // SQ_Size  # rows are the y coordinates
-                if sqSelected == (row, col) or col >= 8:  # Checks to see if the user clicks the same square twice or if the user clicked the move log
-                    sqSelected = ()  # Undoes the sqSelected
-                    playerClicks = []  # Clears player clicks
-                else:
-                    sqSelected = (row, col)
-                    playerClicks.append(sqSelected)  # sqSelected clicks get appended to the player clicks (First click and second click)
+    while programRunning:
+        is_human_turn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)  # Conditions for the turn to be from a human
 
-            if len(playerClicks) == 2:  # Checks for if the second click has been made
-                move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
-                print(move.get_chess_notation())
-                for i in range(len(validMoves)):
-                    if move == validMoves[i]:
-                        gs.make_move(validMoves[i])
-                        # The only moves able to be made are the moves generated by the engine
-                        moveMade = True
-                        animate = True
-                        sqSelected = ()  # Resets the user clicks so the user can make another move
-                        playerClicks = []
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                programRunning = False
 
-        if not moveMade:
-            playerClicks = [sqSelected]
+            elif e.type == p.MOUSEBUTTONDOWN:
+                if not gameOver and is_human_turn:  # only allow mouse clicks if the game has not finished and, it's the human's turn
+                    location = p.mouse.get_pos()  # This gets the x and y coordinates of the mouse
+                    col = location[0] // SQ_Size  # columns are the x coordinates
+                    row = location[1] // SQ_Size  # rows are the y coordinates
 
-        elif e.type == p.KEYDOWN:
-            if e.key == p.K_z:  # Undoes the move when z is pressed
-                gs.undo_move()
-                sqSelected = ()
-                playerClicks = []
-                moveMade = True
-                animate = False
-                gameOver = False
+                    if sqSelected == (row, col) or col >= 8:  # Checks to see if the user clicks the same square twice or if the user clicked the move log
+                        sqSelected = ()  # Undoes the sqSelected
+                        playerClicks = []  # Clears player clicks
+                    else:
+                        sqSelected = (row, col)
+                        playerClicks.append(sqSelected)  # sqSelected clicks get appended to the player clicks (First click and second click)
+                        print(playerClicks)
 
-            if e.key == p.K_r:  # Resets the board when r is pressed
-                gs = ChessEngine.GameState()
-                validMoves = gs.get_valid_moves()
-                sqSelected = ()
-                playerClicks = []
-                moveMade = False
-                animate = False
-                gameOver = False
+                    if len(playerClicks) == 2:  # Checks for if the second click has been made
+                        move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
+                        print(move.get_chess_notation())
+                        for i in range(len(validMoves)):
+                            if move == validMoves[i]:
+                                gs.make_move(validMoves[i])
+                                # The only moves able to be made are the moves generated by the engine
+                                moveMade = True
+                                animate = True
+                                sqSelected = ()  # Resets the user clicks so the user can make another move
+                                playerClicks = []
+                                break
 
-            # AI move logic
-            if not gameOver and not is_human_turn:
-                AIMove = ChessAI.find_best_move(gs, validMoves)
-                if AIMove is None:
-                    AIMove = ChessAI.find_random_move(validMoves)
-                gs.make_move(AIMove)
-                moveMade = True
-                animate = True
+                        if not moveMade:
+                            playerClicks = [sqSelected]
 
-            if moveMade:
-                if animate:
-                    animate_move(gs.moveLog[-1], screen, gs.board, clock)
-                validMoves = gs.get_valid_moves()
-                moveMade = False
-                animate = False
-                draw_game_state(screen, gs, validMoves, sqSelected, moveLogFont)
+            elif e.type == p.KEYDOWN:
+                if e.key == p.K_z:  # Undoes the move when z is pressed
+                    gs.undo_move()
+                    sqSelected = ()
+                    playerClicks = []
+                    moveMade = True
+                    animate = False
+                    gameOver = False
 
-            if gs.checkmate or gs.stalemate:
-                gameOver = True
+                if e.key == p.K_r:  # Resets the board when r is pressed
+                    gs = ChessEngine.GameState()
+                    validMoves = gs.get_valid_moves()
+                    sqSelected = ()
+                    playerClicks = []
+                    moveMade = False
+                    animate = False
+                    gameOver = False
 
+        # AI move logic (moved inside main game loop)
+        if not gameOver and not is_human_turn:
+            AIMove = ChessAI.find_best_move(gs, validMoves)
+            if AIMove is None:
+                AIMove = ChessAI.find_random_move(validMoves)
+            gs.make_move(AIMove)
+            moveMade = True
+            animate = True
+
+        if moveMade:
+            if animate:
+                animate_move(gs.moveLog[-1], screen, gs.board, clock)
+            validMoves = gs.get_valid_moves()
+            moveMade = False
+            animate = False
+
+        draw_game_state(screen, gs, validMoves, sqSelected, moveLogFont)
+
+        if gs.checkmate or gs.stalemate:
+            gameOver = True
             if gs.stalemate:
                 text = 'Stalemate!'
             else:
@@ -138,10 +137,10 @@ while programRunning:
                     text = 'Black Wins by Checkmate!'
                 else:
                     text = 'White Wins by Checkmate!'
-                draw_end_game_text(screen, text)
+            draw_end_game_text(screen, text)
 
-            clock.tick(Max_Fps)
-            p.display.flip()  # Updates the display
+        clock.tick(Max_Fps)
+        p.display.flip()  # Updates the display
 
 def draw_game_state(screen_1, gs_1, valid_moves, sq_selected, move_log_font):
     draw_board(screen_1)  # draws the squares on the board
@@ -153,7 +152,6 @@ def draw_game_state(screen_1, gs_1, valid_moves, sq_selected, move_log_font):
 Draws the squares on the board
 '''
 def draw_board(screen_1):
-    global colours
     colours = [p.Color("white"), p.Color("#BEE5B0")]
     for r in range(Dimension):
         for c in range(Dimension):
@@ -163,9 +161,9 @@ def draw_board(screen_1):
 '''
 Move highlighting - Highlights the piece selected and its possible moves
 '''
-def highlight_squares(screen_1, gs_1, valid_moves):
-    if sqSelected != ():  # Makes sure the user hasn't clicked on an end square yet
-        r, c = sqSelected
+def highlight_squares(screen_1, gs_1, valid_moves, sq_selected):  # Added sq_selected parameter
+    if sq_selected != ():  # Makes sure the user hasn't clicked on an end square yet
+        r, c = sq_selected
         if gs_1.board[r][c][0] == ('w' if gs_1.whiteToMove else 'b'):
             # Makes sure that the square selected is a piece that can be moved
             # Highlighting the selected square
@@ -176,7 +174,7 @@ def highlight_squares(screen_1, gs_1, valid_moves):
 
             # Highlighting possible moves
             s.fill(p.Color('red'))
-            for move_1 in validMoves:
+            for move_1 in valid_moves:  # Changed from validMoves to valid_moves
                 if move_1.startRow == r and move_1.startCol == c:
                     # Checks if the move starts from the selected square
                     screen_1.blit(s, (move_1.endCol * SQ_Size, move_1.endRow * SQ_Size))
@@ -200,10 +198,10 @@ def draw_move_log(screen_1, gs_1, font):
 
     move_log = gs_1.moveLog
     move_texts = []
-    for x in range(0, len(move_log), 2):
+    for i in range(0, len(move_log), 2):  # Changed x to i
         move_string = str(i // 2 + 1) + '.' + str(move_log[i]) + ' '
         # Makes sure each move is under the same turn (move 1 and 2 is turn 1) (move 5 and 6 is turn 3)
-        if x + 1 < len(move_log):  # Makes sure black made a move
+        if i + 1 < len(move_log):  # Makes sure black made a move
             move_string += str(move_log[i + 1]) + ' '
         move_texts.append(move_string)
 
@@ -211,15 +209,15 @@ def draw_move_log(screen_1, gs_1, font):
     shift = 5
     texty = shift
     line_space = 2
-    for x in range(0, len(move_texts), moves_per_row):
+    for i in range(0, len(move_texts), moves_per_row):  # Changed x to i
         # Makes sure multiple moves appear on the same line before going to the next line
         text_1 = ''
         for j in range(moves_per_row):
-            if x + j < len(move_texts):
+            if i + j < len(move_texts):
                 text_1 += move_texts[i + j]
         text_object = font.render(text_1, True, p.Color('White'))  # Colour of text
         text_location = move_log_rectangle.move(shift, texty)
-        screen.blit(text_object, text_location)
+        screen_1.blit(text_object, text_location)  # Changed screen to screen_1
         texty += text_object.get_height() + line_space
 
 
@@ -227,12 +225,13 @@ def draw_move_log(screen_1, gs_1, font):
 Move animation
 '''
 frames_per_square = 10  # frames to move within a square
-def animate_move(move_1, screen_1, board, clock_1, frame_per_square=None):
-    global colours
+def animate_move(move_1, screen_1, board, clock_1):  # Removed unused parameter
+    frames_per_square = 10  # Moved inside the function to avoid global variable
     difference_in_row = move_1.endRow - move_1.startRow
     difference_in_col = move_1.endCol - move_1.startCol
-    frame_count = (abs(difference_in_row) + abs(difference_in_col)) * frame_per_square
+    frame_count = (abs(difference_in_row) + abs(difference_in_col)) * frames_per_square  # Changed to use local variable
 
+    colours = [p.Color("white"), p.Color("#BEE5B0")]  # Added colours definition inside the function
     for frame in range(frame_count + 1):
         r, c = (move_1.startRow + difference_in_row * frame / frame_count,
                 move_1.startCol + difference_in_col * frame / frame_count)  # Forming a ratio of the frames
@@ -273,4 +272,3 @@ def draw_end_game_text(screen_1, text_1):
 
 if __name__ == "__main__":
     main()
-
