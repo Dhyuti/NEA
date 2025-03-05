@@ -1,8 +1,8 @@
 import random
 
-pieceScores = {'K': 0, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'p': 1} # Dictionary of the points for each piece
+chessPieceValuesDictionary = {'K': 0, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'p': 1} # Dictionary of the points for each piece
 
-knightScores = [
+knightPositionalScores = [
     [1, 1, 1, 1, 1, 1, 1, 1],
     [1, 2, 2, 2, 2, 2, 2, 1],
     [1, 2, 3, 3, 3, 3, 2, 1],
@@ -13,7 +13,7 @@ knightScores = [
     [1, 1, 1, 1, 1, 1, 1, 1]
 ]  # Allows AI to recognize the positional strength of knights
 
-bishopScores = [
+bishopPositionalScores = [
     [4, 3, 2, 1, 1, 2, 3, 4],
     [3, 4, 3, 2, 2, 3, 4, 3],
     [2, 3, 4, 3, 3, 4, 3, 2],
@@ -24,7 +24,7 @@ bishopScores = [
     [4, 3, 2, 1, 1, 2, 3, 4]
 ]  # Longer diagonals are better to be on
 
-queenScores = [
+queenPositionalScores = [
     [1, 1, 1, 3, 1, 1, 1, 1],
     [1, 2, 3, 3, 3, 1, 1, 1],
     [1, 4, 3, 3, 3, 4, 2, 1],
@@ -35,7 +35,7 @@ queenScores = [
     [1, 1, 1, 3, 1, 1, 1, 1]
 ]  # Positions that are 4 points attack weak pawns
 
-rookScores = [
+rookPositionalScores = [
     [4, 3, 4, 4, 4, 4, 3, 4],
     [4, 4, 4, 4, 4, 4, 4, 4],
     [1, 1, 2, 3, 3, 2, 1, 1],
@@ -46,7 +46,7 @@ rookScores = [
     [4, 3, 4, 4, 4, 4, 3, 4]
 ]  # Second row is usually the best row to be on
 
-whitePawnScores = [
+whitePawnPositionScores = [
     [8, 8, 8, 8, 8, 8, 8, 8],
     [8, 8, 8, 8, 8, 8, 8, 8],
     [5, 6, 6, 7, 7, 6, 6, 5],
@@ -57,7 +57,7 @@ whitePawnScores = [
     [0, 0, 0, 0, 0, 0, 0, 0]
 ]  # Higher score squares are on the further end of the board
 
-blackPawnScores = [
+blackPawnPositionScores = [
     [0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 0, 0, 1, 1, 1],
     [1, 1, 2, 3, 3, 2, 1, 1],
@@ -68,24 +68,24 @@ blackPawnScores = [
     [8, 8, 8, 8, 8, 8, 8, 8]
 ]  # Higher score squares are at the bottom of the board
 
-piecePositionScores = {
-    "N": knightScores,
-    "Q": queenScores,
-    "R": rookScores,
-    "B": bishopScores,
-    "bp": blackPawnScores,
-    "wp": whitePawnScores
+piecePositionalScores = {
+    "N": knightPositionalScores,
+    "Q": queenPositionalScores,
+    "R": rookPositionalScores,
+    "B": bishopPositionalScores,
+    "bp": blackPawnPositionScores,
+    "wp": whitePawnPositionScores
 }
 
-CHECKMATE = 100000
-STALEMATE = 0
-DEPTH = 3
+checkmateScore = 100000
+stalemateScore = 0
+aiSearchDepth = 3
 '''
 Picks and returns a random move
 '''
 
 
-def find_random_move(valid_moves):
+def choose_random_move(valid_moves):
     return valid_moves[random.randint(0, len(valid_moves) - 1)]
 
 
@@ -93,26 +93,26 @@ def find_random_move(valid_moves):
 Method to make the first recursive call
 '''
 
-def find_best_move(gs, valid_moves):  # Helper method to call the initial recursive call and return the result at the end
+def get_best_move(gs, valid_moves):  # Helper method to call the initial recursive call and return the result at the end
     next_move_1 = None
     random.shuffle(valid_moves)
-    neg_max_alpha_beta(gs, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    negamax_search(gs, valid_moves, aiSearchDepth, -checkmateScore, checkmateScore, 1 if gs.whiteToMove else -1)
     return next_move_1
 
-def neg_max_alpha_beta(gs, valid_moves, depth, alpha, beta, turn_multiplier):  # Alpha is the upper bound, Beta is the lower bound*
+def negamax_search(gs, valid_moves, depth, alpha, beta, turn_multiplier):  # Alpha is the upper bound, Beta is the lower bound*
     global next_move  # Fixed global variable to match the correct variable name
     if depth == 0:
-        return turn_multiplier * score_board(gs)
+        return turn_multiplier * evaluate_board(gs)
     # Ordering the moves will implement later
-    max_score = -CHECKMATE
+    max_score = -checkmateScore
     for move in valid_moves:
         gs.make_move(move)
         next_moves = gs.get_valid_moves()
-        score = -neg_max_alpha_beta(gs, next_moves, depth - 1, -beta, -alpha, -turn_multiplier)  # the minimum and maximum get reversed for the opponent
+        score = -negamax_search(gs, next_moves, depth - 1, -beta, -alpha, -turn_multiplier)  # the minimum and maximum get reversed for the opponent
         if score > max_score:
             max_score = score
 
-        if depth == DEPTH:
+        if depth == aiSearchDepth:
             next_move = move  # Fixed global variable to match the correct variable name
         gs.undo_move()
 
@@ -125,14 +125,14 @@ def neg_max_alpha_beta(gs, valid_moves, depth, alpha, beta, turn_multiplier):  #
 '''
 Positive score is good for white --> negative score is good for black
 '''
-def score_board(gs):
+def evaluate_board(gs):
     if gs.checkmate:
         if gs.whiteToMove:
-            return -CHECKMATE  # Black wins
+            return -checkmateScore  # Black wins
         else:
-            return CHECKMATE  # White Wins
+            return checkmateScore  # White Wins
     elif gs.stalemate:
-        return STALEMATE
+        return stalemateScore
 
     score = 0
     for row in range(len(gs.board)):
@@ -144,13 +144,14 @@ def score_board(gs):
                 piece_position_score = 0
                 if square[1] != 'K':
                     if square[1] == 'p':  # for pawns
-                        piece_position_score = piecePositionScores[square][row][col]
+                        piece_position_score = piecePositionalScores[square][row][col]
                     else:  # for other pieces
-                        piece_position_score = piecePositionScores[square[1]][row][col]  # Gets the correct score of the pieces in the correct position
+                        piece_position_score = piecePositionalScores[square[1]][row][col]  # Gets the correct score of the pieces in the correct position
                 if square[0] == 'w':
-                    score += pieceScores[square[1]] + piece_position_score
+                    score += chessPieceValuesDictionary[square[1]] + piece_position_score
                 elif square[0] == 'b':
-                    score -= pieceScores[square[1]] + piece_position_score
+                    score -= chessPieceValuesDictionary[square[1]] + piece_position_score
 
     return score
+
 
