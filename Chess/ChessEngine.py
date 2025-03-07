@@ -25,32 +25,33 @@ class GameState:
         ]
 
         self.pieceMovementFunctions = {
-            'p': self.pawn,
             'R': self.rook,
-            'N': self.knight,
+            'p': self.pawn,
             'B': self.bishop,
-            'Q': self.queen,
-            'K': self.king
+            'N': self.knight,
+            'K': self.king,
+            'Q': self.queen
         }
 
-        self.whiteToMove = True
         self.moveLog = []
+        self.whiteToMove = True
         self.WhiteKingPosition = (7, 4)  # Exact location of white king
         self.BlackKingPosition = (0, 4)
 
         self.isKingInCheck = False
         self.pins = []  # list of pinned pieces
         self.checks = []
-        self.checkmate = False
-        self.stalemate = False
         self.enpassantPossible = ()  # These are the coordinates for the square where it is possible to do en passant
         self.enPassantHistory = [self.enpassantPossible]
+        self.checkmate = False
+        self.stalemate = False
+
 
         # Castle Rights
-        self.whiteCanCastleKingSide = True
         self.whiteCanCastleQueenSide = True
-        self.blackCanCastleKingSide = True
+        self.whiteCanCastleKingSide = True
         self.blackCanCastleQueenSide = True
+        self.blackCanCastleKingSide = True
         self.castlingHistory = [CastleRights(self.whiteCanCastleKingSide, self.blackCanCastleKingSide,
                                              self.whiteCanCastleQueenSide,
                                              self.blackCanCastleQueenSide)]  # Keeps track of the castles available
@@ -414,15 +415,15 @@ class GameState:
 
         # Moving
         if self.board[r + move_amount][c] == '--': # 1 square pawn move
-            if not piece_pinned or pin_direction == (move_amount, 0):
+            if pin_direction == (move_amount, 0) or not piece_pinned:
                 moves.append(Move((r, c), (r + move_amount, c), self.board))
 
         if r == start_row and self.board[r + 2 * move_amount][c] == '--': # 2 square pawn move
             moves.append(Move((r, c), (r + 2 * move_amount, c), self.board))
 
         # Capturing
-        if c - 1 >= 0:
-            if not piece_pinned or pin_direction == (move_amount, -1):
+        if c - 1 >= 0 and (pin_direction == (move_amount, -1) or not piece_pinned):
+            if pin_direction == (move_amount, -1):
                 if self.board[r + move_amount][c - 1][0] == enemy_colour:
                     # Diagonal Left Capture
                     moves.append(Move((r, c), (r + move_amount, c - 1), self.board))
@@ -452,12 +453,15 @@ class GameState:
                     if not is_attacking_piece or is_blocking_piece:
                         moves.append(Move((r, c), (r + move_amount, c - 1), self.board))
 
-                    if c + 1 <= 7:
-                        if not piece_pinned or pin_direction == (move_amount, 1):
-                            if self.board[r + move_amount][c + 1][0] == enemy_colour:
-                                # Diagonal Right Capture
-                                moves.append(Move((r, c), (r + move_amount, c + 1), self.board)) #ashish_bhai
-
+                    # Right Diagonal Capture
+                    if c + 1 <= 7:  # Ensure right capture is within bounds
+                        if not piece_pinned or pin_direction == (
+                        move_amount, 1):  # Ensure it's not pinned or matches the pin direction
+                            # Check if the square to the right has an enemy piece
+                            if self.board[r + move_amount][c + 1][
+                                0] == enemy_colour:  # Ensure enemy piece in the diagonal
+                                moves.append(
+                                    Move((r, c), (r + move_amount, c + 1), self.board))  # Diagonal Right Capture
                             if (r + move_amount, c + 1) == self.enpassantPossible:
                                 is_attacking_piece = is_blocking_piece = False
                     if king_row == r:
@@ -478,8 +482,9 @@ class GameState:
                         if square[0] == enemy_colour and (
                                 square[1] == 'R' or square[1] == 'Q'):  # There is an attacking piece
                             is_attacking_piece = True
-                        elif square != '--':
-                            is_blocking_piece = True
+                        elif square[0] == enemy_colour and (
+                                square[1] == 'R' or square[1] == 'Q'):  # There is an attacking piece
+                            is_attacking_piece = True
                     if not is_attacking_piece or is_blocking_piece:
                         moves.append(Move((r, c), (r + move_amount, c + 1), self.board, is_enpassant_move=True))
     '''
@@ -499,7 +504,7 @@ class GameState:
                         self.pins.remove(self.pins[i])
                     break
 
-        #Rooks move--> up, left, down, right
+        #the rook moves up,left,down,right
         directions = ((-1,0), (1,0), (0,-1), (0, 1)) #list of
         # tuples of all the possible directions for Rooks
         if self.whiteToMove:
@@ -511,19 +516,19 @@ class GameState:
         for d in directions:
 
             for i in range(1,8):
-                end_row = r + d[0] * i #gets all the rows in the given direction
-                end_col = c +d[1] * i #Gets all the columns in the given direction
-                if 0 <= end_row < 8 and 0 <= end_col < 8: #Checks if the piece is on the board
+                end_col = c +d[1] * i #Gets all the columns in the direction given
+                end_row = r + d[0] * i  # gets all the rows in the direction given
+                if 0 <= end_row < 8 and 0 <= end_col < 8: #Checks whether the piece is on the board
                     if not piece_pinned or pin_direction == d or pin_direction == (-d[0], -d[1]): #Checks if the pin is in the direction or the opposite direction as well
 
                         end_square = self.board[end_row][end_col]
-                        if end_square == '--': #checks if the squares in the given direction is empty
+                        if end_square[0] == enemy_colour: #Checks if the first index of the piece in the underlying text based game is the enemy colour
                             moves.append(Move((r,c), (end_row, end_col), self.board))
-                        elif end_square[0] == enemy_colour: #Checks if the first index of the piece in the underlying text based game is the enemy colour
+                        elif end_square == '--': #checks if the squares in the given direction is empty
                             moves.append(Move((r,c), (end_row, end_col), self.board))
 
                             break
-                        else: #when the endSquare is off the board
+                        else: #when the end_square is not on the board
 
                             break
                     else:
@@ -538,8 +543,7 @@ class GameState:
                 self.pins.remove(self.pins[i])
                 break
 
-        directions = ((1,-2), (2,-1), (2, 1), (1, 2), (-1, 2), (-2, 1),
-                    (-2, -1), (-1, -2))
+        directions = ((1,-2), (2,-1), (2, 1), (1, 2), (-1, 2), (-2, 1),(-2, -1), (-1, -2))
 
         if self.whiteToMove:
             friendly = 'w'
@@ -580,9 +584,9 @@ class GameState:
                     if not piece_pinned or pin_direction == d or pin_direction == (-d[0], -d[1]):
 
                         end_square = self.board[end_row][end_col]
-                        if end_square == '--': # checks if the squares in the given direction is empty
+                        if end_square[0] == enemy_colour: # Checks if the first index of the piece in the underlying text based game is the enemy colour
                             moves.append(Move((r, c), (end_row, end_col), self.board))
-                        elif end_square[0] == enemy_colour: # Checks if the first index of the piece in the underlying text based game is the enemy colour
+                        elif end_square == '--': # checks if the squares in the given direction is empty
                             moves.append(Move((r, c), (end_row, end_col), self.board))
 
                             break
@@ -636,32 +640,34 @@ class GameState:
         in_check = self.square_under_attack(r, c, friendly)
         if in_check:
             return #cannot castle if in check
+        if (self.whiteToMove and self.whiteCanCastleQueenSide) or (not self.whiteToMove and self.blackCanCastleQueenSide):
+            self.get_queen_side_castle_moves(r, c , moves, friendly)
         if (self.whiteToMove and self.whiteCanCastleKingSide) or (not self.whiteToMove and self.blackCanCastleKingSide):
             self.get_king_side_castle_moves(r, c , moves, friendly)
 
-        if (self.whiteToMove and self.whiteCanCastleQueenSide) or (not self.whiteToMove and self.blackCanCastleQueenSide):
-            self.get_queen_side_castle_moves(r, c , moves, friendly)
-
     '''
-    Generates King_side castle moves - will only be called if the
-    player still has the rights to castle
-    '''
-    def get_king_side_castle_moves(self, r, c, moves, friendly):
-
-        if self.board[r][c+1] == '--' and self.board[r][c+2] == '--' and not self.square_under_attack(r, c+1, friendly) and not self.square_under_attack(r, c+2, friendly):
-            moves.append(Move((r, c), (r, c+2), self.board, castle=True))
-
-    '''
-    Generates Queen_side castle moves - will only be called if the
-    player still has the rights to castle
+    Generates Queen_side castle moves - will only be invoked if the
+    player maintains the rights to castle
     '''
 
     def get_queen_side_castle_moves(self, r, c, moves, friendly):
         # Will check if the squares between the king and the rook are
         # clear and if the two squares to the left of the king is not under attack
 
-        if self.board[r][c-1] == '--' and self.board[r][c-2] == '--' and self.board[r][c-3] == '--' and not self.square_under_attack(r, c-1, friendly) and not self.square_under_attack(r, c-2, friendly):
-            moves.append(Move((r, c), (r, c-2), self.board, castle=True))
+        if self.board[r][c - 1] == '--' and self.board[r][c - 2] == '--' and self.board[r][
+            c - 3] == '--' and not self.square_under_attack(r, c - 1, friendly) and not self.square_under_attack(r, c - 2,friendly):
+            moves.append(Move((r, c), (r, c - 2), self.board, castle=True))
+    '''
+    Generates King_side castle moves - will be played only if the
+    player still has castle rights
+    
+    '''
+    def get_king_side_castle_moves(self, r, c, moves, friendly):
+
+        if self.board[r][c+1] == '--' and self.board[r][c+2] == '--' and not self.square_under_attack(r, c+1, friendly) and not self.square_under_attack(r, c+2, friendly):
+            moves.append(Move((r, c), (r, c+2), self.board, castle=True))
+
+
 
 class CastleRights:
    def __init__(self, wks, bks, wqs, bqs):
@@ -679,8 +685,8 @@ class CastleRights:
         self.blackQueenSide = black_queen_side
 
 class Move:
-    # Creating a dictionary that will map the computer notation of the
-    # board into algebraic notation
+    # Creating a dictionary that will translate the computer notation of
+    # board into algebraic form
     ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 4,
                    "5": 3, "6": 2, "7": 1, "8": 0}
     rowsToRanks = {v: k for k, v in ranksToRows.items()}
@@ -688,7 +694,8 @@ class Move:
                    "e": 4, "f": 5, "g": 6, "h": 7}
     colsToFiles = {v: k for k, v in filesToCols.items()}
 
-    def __init__(self, start_sq, end_sq, board, is_enpassant_move=False, castle=False):  # Inclusion of an optional parameter
+    def __init__(self, start_sq, end_sq, board, is_enpassant_move=False, castle=False):  # Addition of an optional parameter
+
         self.startRow = start_sq[0]  # startSq is a tuple
         self.startCol = start_sq[1]
         self.endRow = end_sq[0]
@@ -699,10 +706,11 @@ class Move:
 
         self.is_capture = (self.pieceCaptured != '--')  # If a piece is captured, it's not an empty square '--'
 
+
         # Pawn Promotion
-        self.isPawnPromotion = False  # The game starts off with 0 pawn promotions
+        self.isPawnPromotion = False  # The game starts with 0 pawn promotions
         if (self.pieceMoved == 'wp' and self.endRow == 0) or (
-                self.pieceMoved == 'bp' and self.endRow == 7):  # These are the conditions for pawn promotion
+                self.pieceMoved == 'bp' and self.endRow == 7):  # These are the criteria for pawn promotion
             self.isPawnPromotion = True
 
         # En passant

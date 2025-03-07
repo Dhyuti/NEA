@@ -5,6 +5,27 @@ displaying the current Game State
 
 import pygame as pg
 import ChessEngine, ChessAI
+# ChessMain.py
+
+import board
+import pieces
+import ai
+from move import Move
+
+
+game_board = board.Board.new()
+
+print(game_board.to_string())
+
+user_move = Move(0, 1, 0, 3)
+game_board.perform_move(user_move)
+
+print(game_board.to_string())
+
+ai_move = ai.AI.get_ai_move(game_board, [])
+game_board.perform_move(ai_move)
+
+print(game_board.to_string())
 
 screenWidth = screenHeight = 512  # Setting up the size of the screen
 moveHistoryPanelWidth = 350
@@ -112,7 +133,7 @@ def main():
 
         # AI move logic (moved inside main game loop)
         if not isGameOver and not is_human_turn:
-            AIMove = ChessAI.get_best_move(gs, legalMoves)
+            AIMove = ChessAI.get_best_move(gs,legalMoves)
             if AIMove is None:
                 AIMove = ChessAI.choose_random_move(legalMoves)
             gs.make_move(AIMove)

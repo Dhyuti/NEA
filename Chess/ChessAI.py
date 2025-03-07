@@ -94,6 +94,7 @@ Method to make the first recursive call
 '''
 
 def get_best_move(gs, valid_moves):  # Helper method to call the initial recursive call and return the result at the end
+    global next_move_1
     next_move_1 = None
     random.shuffle(valid_moves)
     negamax_search(gs, valid_moves, aiSearchDepth, -checkmateScore, checkmateScore, 1 if gs.whiteToMove else -1)
@@ -153,5 +154,4 @@ def evaluate_board(gs):
                     score -= chessPieceValuesDictionary[square[1]] + piece_position_score
 
     return score
-
 
