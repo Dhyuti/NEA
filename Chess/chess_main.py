@@ -71,8 +71,8 @@ def main():
     playerTwo = False
     while programRunning:
         # Conditions for the turn to be from a human
-        isHumanTurn = (gs.whiteToMove and playerOne) or (
-            not gs.whiteToMove and playerTwo
+        isHumanTurn = (gs.white_move and playerOne) or (
+            not gs.white_move and playerTwo
         )
         for e in p.event.get():
             if e.type == p.QUIT:
@@ -147,7 +147,7 @@ def main():
 
         if moveMade:
             if animate:
-                animate_move(gs.moveLog[-1], screen, gs.board, clock)
+                animate_move(gs.move_log[-1], screen, gs.board, clock)
             validMoves = gs.getValidMoves()
             moveMade = False
             animate = False
@@ -163,7 +163,7 @@ def main():
                     if gs.stalemate
                     else (
                         "Black wins by Checkmate"
-                        if gs.whiteToMove
+                        if gs.white_move
                         else "White wins by Checkmate"
                     )
                 ),
@@ -215,7 +215,7 @@ def highlight_squares(screen, gs, validMoves, sqSelected):
     if sqSelected != ():
         r, c = sqSelected
         # Make sure that the square selected is a piece that can be moved
-        if gs.board[r][c][0] == ("w" if gs.whiteToMove else "b"):
+        if gs.board[r][c][0] == ("w" if gs.white_move else "b"):
             # Highlighting the selected square
             s = p.Surface((sq_size, sq_size))
             s.set_alpha(100)  # sets the transparency between 1 and 255
@@ -224,7 +224,7 @@ def highlight_squares(screen, gs, validMoves, sqSelected):
             # Highlighting possible moves
             s.fill(p.Color("red"))
             for move in validMoves:
-                if move.startRow == r and move.startCol == c:
+                if move.start_row == r and move.start_col == c:
                     # Checks if the move starts from the selected square
                     screen.blit(
                         s, (move.endCol * sq_size, move.endRow * sq_size))
@@ -256,15 +256,15 @@ def draw_move_log(screen, gs, font):
         board_w, 0, move_log_panel_width, move_log_panel_height)
     # Colour of rectangle
     p.draw.rect(screen, p.Color("black"), move_log_rect)
-    moveLog = gs.moveLog
+    move_log = gs.move_log
     moveTexts = []
-    for i in range(0, len(moveLog), 2):
-        moveString = str(i // 2 + 1) + "." + str(moveLog[i]) + " "
+    for i in range(0, len(move_log), 2):
+        moveString = str(i // 2 + 1) + "." + str(move_log[i]) + " "
         # Makes sure each move is under the same turn
         # (move 1 and 2 is turn 1) (move 5 and 6 is turn 3)
         # Makes sure black made a move
-        if i + 1 < len(moveLog):
-            moveString += str(moveLog[i + 1]) + " "
+        if i + 1 < len(move_log):
+            moveString += str(move_log[i + 1]) + " "
         moveTexts.append(moveString)
     movesPerRow = 3
     shift = 5
@@ -291,15 +291,15 @@ This function is responsible for animating the move
 
 def animate_move(move, screen, board, clock):
     global Colors
-    diff_in_row = move.endRow - move.startRow
-    differenceInCol = move.endCol - move.startCol
+    diff_in_row = move.endRow - move.start_row
+    differenceInCol = move.endCol - move.start_col
     # frames to move within a square
     framesPerSquare = 10
     frameCount = (abs(diff_in_row) + abs(differenceInCol)) * framesPerSquare
     for frame in range(frameCount + 1):
         r, c = (
-            move.startRow + diff_in_row * frame / frameCount,
-            move.startCol + differenceInCol * frame / frameCount,
+            move.start_row + diff_in_row * frame / frameCount,
+            move.start_col + differenceInCol * frame / frameCount,
         )
         draw_board(screen)
         draw_pieces(screen, board)

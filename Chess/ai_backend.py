@@ -100,7 +100,7 @@ def find_best_move(gs, valid_moves):
     global next_move
     next_move = None
     random.shuffle(valid_moves)
-    turn_multiplier = 1 if gs.whiteToMove else -1
+    turn_multiplier = 1 if gs.white_move else -1
     neg_max_alpha_beta(
         gs, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, turn_multiplier
     )
@@ -140,7 +140,7 @@ Postive score is good for white --> negative score is good for black
 
 def score_board(gs):
     if gs.checkmate:
-        if gs.whiteToMove:
+        if gs.white_move:
             # Black wins
             return -CHECKMATE
         else:
